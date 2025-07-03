@@ -1,0 +1,24 @@
+{
+  "name": "crid-project",
+  "version": "1.0.0",
+  "description": "Projeto de Certificado de Registro de Inscrição em Disciplina com Solidity e Hardhat",
+  "main": "index.js",
+  "scripts": {
+    "test": "hardhat test"
+  },
+  "keywords": [
+    "solidity",
+    "hardhat",
+    "blockchain",
+    "certificate"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.5"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.2"
+  }
+}
