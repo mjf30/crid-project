@@ -46,7 +46,7 @@ describe("Crid", function () {
       dataEmissao: Math.floor(Date.now() / 1000),
       nonce: 1,
     };
-
+    // true
     it("Deve retornar true para uma assinatura valida do owner", async function () {
       const signature = await signCertificate(owner, certificado);
       expect(await crid.verificarCertificado(certificado, signature)).to.be.true;
