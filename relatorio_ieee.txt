@@ -1,0 +1,202 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage[utf8]{inputenc} % Para acentuação em português
+\usepackage{listings} % Para blocos de código
+
+% Configuração do listings para código Solidity e YAML
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{solidity}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\footnotesize\ttfamily,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    language=Solidity
+}
+
+\lstdefinestyle{yaml}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    stringstyle=\color{codepurple},
+    basicstyle=\footnotesize\ttfamily,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    language=YAML
+}
+
+\lstset{style=solidity}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\begin{document}
+
+\title{Verificação de Autenticidade de Certificados Acadêmicos via Smart Contracts e Assinaturas Digitais\\
+\thanks{Este trabalho foi desenvolvido como um projeto de prova de conceito para demonstrar a aplicação de tecnologias de blockchain na validação de documentos digitais.}
+}
+
+\author{\IEEEauthorblockN{1\textsuperscript{st} Autor Fictício}
+\IEEEauthorblockA{\textit{Departamento de Ciência da Computação} \\
+\textit{Universidade Fictícia}\\
+Cidade, Brasil \\
+email@universidade.edu}
+\and
+\IEEEauthorblockN{2\textsuperscript{nd} Orientador Fictício}
+\IEEEauthorblockA{\textit{Departamento de Ciência da Computação} \\
+\textit{Universidade Fictícia}\\
+Cidade, Brasil \\
+email.orientador@universidade.edu}
+}
+
+\maketitle
+
+\begin{abstract}
+A falsificação de documentos acadêmicos é um problema persistente que compromete a integridade de instituições de ensino e a confiança no mercado de trabalho. Este artigo apresenta uma solução baseada em blockchain para a verificação de autenticidade de Certificados de Registro de Inscrição em Disciplina (CRID), utilizando um smart contract na rede Ethereum. A abordagem proposta emprega um mecanismo de assinaturas digitais off-chain para validação on-chain, o que garante segurança criptográfica e, ao mesmo tempo, minimiza os custos de transação (gás) ao evitar o armazenamento de dados de certificados na blockchain. O projeto inclui o desenvolvimento do smart contract em Solidity, uma suíte de testes robusta com Hardhat e a implementação de um pipeline de Integração Contínua (CI) com GitHub Actions para automatizar a verificação e a implantação. Os resultados demonstram um sistema seguro, eficiente e automatizado para validar a autenticidade de certificados de forma descentralizada e à prova de adulteração.
+\end{abstract}
+
+\begin{IEEEkeywords}
+blockchain, smart contracts, Solidity, Ethereum, assinatura digital, verificação de certificados, Hardhat, GitHub Actions.
+\end{IEEEkeywords}
+
+\section{Introdução}
+A verificação da autenticidade de documentos, especialmente no meio acadêmico, é um desafio crítico. Métodos tradicionais, como a verificação manual ou sistemas centralizados, são frequentemente lentos, custosos e suscetíveis a fraudes e falhas. A tecnologia blockchain surge como uma alternativa promissora, oferecendo um registro imutável, transparente e descentralizado, ideal para garantir a integridade de informações.
+
+Este projeto propõe um sistema para a validação de um Certificado de Registro de Inscrição em Disciplina (CRID), implementado através de um smart contract na blockchain Ethereum. O objetivo principal é criar um método que permita a qualquer parte interessada (como empregadores ou outras instituições) verificar a autenticidade de um certificado de forma rápida e segura, sem depender de um intermediário central.
+
+A solução se diferencia por sua eficiência de custos. Em vez de registrar cada certificado na blockchain, o que seria dispendioso, o sistema armazena apenas a lógica de verificação. A instituição de ensino assina digitalmente os dados do certificado off-chain com sua chave privada, e o smart contract é usado para verificar publicamente essa assinatura on-chain. Este método combina a segurança da criptografia de chave pública com a imutabilidade da blockchain.
+
+\section{Metodologia}
+O sistema foi desenvolvido utilizando um conjunto de ferramentas modernas para o ecossistema Ethereum. A metodologia abrange o design do smart contract, o processo de assinatura e verificação, a criação de testes automatizados e a configuração de um pipeline de CI.
+
+\subsection{Smart Contract em Solidity}
+O coração do sistema é o smart contract `Crid.sol`, escrito em Solidity. Ele herda do contrato `Ownable.sol` da biblioteca OpenZeppelin \cite{openzeppelin}, que estabelece um padrão de controle de acesso onde apenas o endereço que implantou o contrato (a instituição de ensino) é designado como "owner" e tem a autoridade para emitir certificados válidos.
+
+A principal função do contrato é `verificarCertificado`, mostrada na Listagem \ref{lst:verificar}. Ela não armazena nenhuma informação do certificado na blockchain. Em vez disso, recebe os dados do certificado e uma assinatura como parâmetros. O processo de verificação ocorre em três etapas:
+\begin{enumerate}
+    \item \textbf{Reconstrução da Hash:} O contrato recalcula a hash `keccak256` dos dados do certificado recebidos, replicando o mesmo processo que deve ser feito off-chain antes da assinatura.
+    \item \textbf{Prefixo Ethereum:} A hash é então prefixada com `\x19Ethereum Signed Message:\n32`. Este é um padrão de segurança que impede que uma assinatura seja usada de forma maliciosa em outros contextos de transação na rede Ethereum.
+    \item \textbf{Recuperação do Assinante:} Utilizando a função nativa `ecrecover`, o contrato extrai o endereço público do assinante a partir da hash prefixada e da assinatura.
+\end{enumerate}
+A verificação é considerada bem-sucedida se, e somente se, o endereço recuperado for o mesmo do `owner` do contrato.
+
+\begin{lstlisting}[language=Solidity, caption={Função principal de verificação no Crid.sol}, label={lst:verificar}]
+function verificarCertificado(
+    Certificado calldata _certificado,
+    bytes calldata _assinatura
+) public view returns (bool) {
+    // Reconstrói a hash da mensagem que foi assinada
+    bytes32 messageHash = _getMessageHash(_certificado);
+
+    // Adiciona o prefixo padrão do Ethereum
+    bytes32 prefixedHash = _getEthSignedMessageHash(messageHash);
+
+    // Recupera o endereço do assinante
+    address signer = _recoverSigner(prefixedHash, _assinatura);
+
+    // Valida se o assinante é o owner do contrato
+    return signer != address(0) && signer == owner();
+}
+\end{lstlisting}
+
+\subsection{Testes Automatizados com Hardhat}
+A segurança e a corretude são primordiais em smart contracts. Portanto, uma suíte de testes abrangente foi desenvolvida utilizando o framework Hardhat \cite{hardhat} e a biblioteca Ethers.js. Os testes, localizados em `test/Crid.test.js`, cobrem os seguintes cenários:
+\begin{itemize}
+    \item \textbf{Assinatura Válida:} Verifica se o contrato retorna `true` para um certificado assinado corretamente pelo `owner`.
+    \item \textbf{Assinatura Inválida:} Garante que o contrato retorne `false` se a assinatura for adulterada.
+    \item \textbf{Assinante Incorreto:} Testa se uma assinatura válida, mas gerada por uma conta que não é o `owner`, resulta em falha na verificação.
+    \item \textbf{Dados Adulterados:} Assegura que, se os dados do certificado forem alterados após a assinatura, a verificação falhe.
+\end{itemize}
+Esses testes são cruciais para garantir que o contrato se comporte como esperado sob todas as condições e para prevenir a introdução de vulnerabilidades.
+
+\subsection{Integração Contínua com GitHub Actions}
+Para automatizar o processo de verificação e garantir a qualidade do código, foi configurado um pipeline de Integração Contínua (CI) usando GitHub Actions. O arquivo de workflow `.github/workflows/ci.yml` (Listagem \ref{lst:ci}) define um job que é acionado a cada `push` ou `pull request` para o branch `main`.
+
+O pipeline executa as seguintes etapas:
+\begin{enumerate}
+    \item \textbf{Checkout:} Clona o repositório no ambiente de execução.
+    \item \textbf{Setup Node.js:} Configura o ambiente Node.js.
+    \item \textbf{Instalar Dependências:} Instala as dependências do projeto de forma segura usando `npm ci`.
+    \item \textbf{Compilar Contrato:} Executa `npx hardhat compile` para compilar o smart contract.
+    \item \textbf{Executar Testes:} Roda a suíte de testes com `npx hardhat test`.
+\end{enumerate}
+Se qualquer uma dessas etapas falhar, o pipeline falha, notificando os desenvolvedores de que há um problema que precisa ser corrigido antes da integração do código.
+
+\begin{lstlisting}[language=YAML, caption={Workflow de CI com GitHub Actions}, label={lst:ci}]
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup do Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    - name: Instalar dependencias
+      run: npm ci
+    - name: Compilar o contrato
+      run: npx hardhat compile
+    - name: Executar os testes
+      run: npx hardhat test
+\end{lstlisting}
+
+\section{Resultados}
+O projeto resultou em um sistema de prova de conceito totalmente funcional para a verificação de certificados acadêmicos. Os principais resultados alcançados são:
+\begin{itemize}
+    \item \textbf{Segurança:} A validação é baseada em criptografia de chave pública, tornando a falsificação de uma assinatura computacionalmente inviável. A lógica, uma vez implantada na blockchain, é imutável.
+    \item \textbf{Eficiência de Custo:} Ao evitar o armazenamento de dados on-chain, o custo de gás para a verificação é extremamente baixo, pois envolve apenas a execução de uma função `view` (somente leitura), que é gratuita se chamada off-chain, ou consome uma quantidade mínima de gás se chamada como parte de outra transação.
+    \item \textbf{Automação e Confiabilidade:} O pipeline de CI/CD garante que cada alteração no código seja automaticamente testada, aumentando a confiabilidade do smart contract e reduzindo o risco de erros humanos.
+    \item \textbf{Descentralização:} Qualquer pessoa com acesso à blockchain pode verificar um certificado sem precisar confiar em um sistema centralizado mantido pela instituição.
+\end{itemize}
+
+\section{Conclusão}
+Este trabalho demonstrou com sucesso a viabilidade de usar smart contracts e assinaturas digitais para criar um sistema de verificação de certificados seguro, eficiente e descentralizado. A arquitetura proposta resolve o problema da validação de documentos de forma elegante, aproveitando os pontos fortes da tecnologia blockchain sem incorrer em altos custos de armazenamento.
+
+Como trabalhos futuros, o sistema pode ser expandido de várias maneiras. A criação de uma interface de usuário (dApp - Aplicação Descentralizada) facilitaria a interação para usuários não técnicos, permitindo que eles submetam os dados do certificado e a assinatura para verificação com um clique. Além disso, o modelo pode ser generalizado para validar outros tipos de credenciais, como diplomas, históricos escolares e certificados profissionais.
+
+\begin{thebibliography}{00}
+\bibitem{openzeppelin} OpenZeppelin, "OpenZeppelin Contracts: Secure Smart Contracts for Ethereum," [Online]. Available: https://openzeppelin.com/contracts/
+\bibitem{hardhat} Hardhat, "Ethereum development environment for professionals," [Online]. Available: https://hardhat.org/
+\bibitem{solidity} Solidity Documentation, "Solidity Language Documentation," [Online]. Available: https://docs.soliditylang.org/
+\bibitem{ethereum} Ethereum Foundation, "Ethereum Whitepaper," [Online]. Available: https://ethereum.org/en/whitepaper/
+\end{thebibliography}
+\vspace{12pt}
+
+\end{document}
