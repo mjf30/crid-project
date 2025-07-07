@@ -1,15 +1,35 @@
 \documentclass[conference]{IEEEtran}
 
-% Pacotes úteis
+% --- PACOTES ---
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage{url}
 \usepackage{hyperref}
+\usepackage{listings} % Para blocos de código formatados
 
-% Informações do Documento
-\title{CRID-Registry: Implementação de um Cartório de Certificados Acadêmicos via Smart Contract}
+% --- CONFIGURAÇÕES DE ESTILO ---
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+}
+\lstset{
+    language=Solidity,
+    basicstyle=\footnotesize\ttfamily,
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!50!black},
+    stringstyle=\color{red},
+    breaklines=true,
+    frame=single,
+    tabsize=2,
+    showstringspaces=false
+}
+
+% --- INFORMAÇÕES DO DOCUMENTO ---
+\title{CRID-Registry: Arquitetura e Implementação de um Cartório Digital On-Chain para Certificados Acadêmicos}
 
 \author{
     \IEEEauthorblockN{Seu Nome Aqui}
@@ -24,107 +44,156 @@
 
 \maketitle
 
-% --- Resumo (Abstract) ---
+% --- RESUMO ---
 \begin{abstract}
-A verificação de autenticidade de certificados acadêmicos é um desafio constante, com sistemas tradicionais sendo suscetíveis a fraudes e ineficiências. Este relatório detalha o desenvolvimento de um sistema de Certificados de Registro de Inscrição em Disciplina (CRID) utilizando a tecnologia blockchain. Inicialmente, foi considerada uma implementação baseada em Tokens Não Fungíveis (NFTs) no padrão ERC-721. No entanto, optou-se por uma abordagem mais controlada e específica para o caso de uso: um registro de certificados customizado (on-chain registry). Este modelo funciona como um cartório digital, onde os certificados são armazenados como estruturas de dados diretamente no smart contract. A instituição emissora detém controle total sobre a emissão e revogação, garantindo um registro autoritativo e imutável. Este documento descreve a arquitetura final, as escolhas tecnológicas, os detalhes da implementação e os resultados dos testes.
+A autenticidade e a perenidade de certificados acadêmicos são pilares para a confiança no sistema educacional. Sistemas tradicionais, no entanto, são vulneráveis a fraudes, perdas e ineficiências operacionais. Este relatório apresenta uma análise aprofundada do desenvolvimento do CRID-Registry, um sistema de registro de certificados on-chain construído na blockchain Ethereum. O documento detalha a justificativa para a escolha de uma arquitetura de registro customizado em detrimento do padrão de Token Não Fungível (NFT, ERC-721), argumentando que o controle autoritativo e a natureza não transferível dos registros são mais adequados para credenciais acadêmicas. A implementação do smart contract \texttt{CridRegistry.sol} é dissecada, incluindo suas estruturas de dados, funções de controle de acesso, emissão, revogação e consulta. Finalmente, a metodologia de testes e os resultados são apresentados, validando a robustez do sistema e delineando caminhos para trabalhos futuros.
 \end{abstract}
 
-% --- Palavras-chave ---
+% --- PALAVRAS-CHAVE ---
 \begin{IEEEkeywords}
-Blockchain, Smart Contract, Solidity, Hardhat, Certificados Digitais, Registro On-Chain, Controle de Acesso.
+Blockchain, Smart Contract, Solidity, Hardhat, Certificados Digitais, Registro On-Chain, Controle de Acesso, Ethereum.
 \end{IEEEkeywords}
 
 \IEEEpeerreviewmaketitle
 
-% --- Seção 1: Introdução ---
+% --- SEÇÃO 1: INTRODUÇÃO ---
 \section{Introdução}
-A integridade de registros acadêmicos é fundamental para instituições de ensino e para a sociedade. Métodos tradicionais, baseados em papel ou em bancos de dados centralizados, apresentam vulnerabilidades significativas, como a possibilidade de falsificação e a dificuldade de verificação por terceiros. A tecnologia blockchain oferece uma solução robusta para esses problemas, provendo um registro imutável, transparente e descentralizado.
+A verificação de credenciais acadêmicas é um processo historicamente analógico e centralizado, propenso a falsificações e burocracia. A digitalização desses processos, embora tenha trazido melhorias, frequentemente apenas transfere a centralização para bancos de dados proprietários, mantendo a dependência de uma única entidade para validação e preservação dos registros.
 
-Este projeto, denominado CRID-Registry, explora a aplicação da blockchain para criar um sistema de certificados acadêmicos digitais confiáveis. A abordagem inicial considerou o uso do padrão ERC-721 (NFT), que representaria cada certificado como um token único e transferível. Embora essa abordagem garanta a propriedade do aluno, ela também introduz complexidades como a necessidade de gerenciamento de metadados off-chain e a livre transação dos certificados em mercados secundários, o que pode não ser desejável para um documento acadêmico formal.
+A tecnologia blockchain, com sua natureza de registro distribuído, imutável e transparente, oferece um paradigma fundamentalmente superior para este caso de uso. Ao registrar um certificado na blockchain, cria-se uma prova de existência e autenticidade que é resistente à censura, independente de qualquer instituição central e perpetuamente acessível.
 
-Por essa razão, o projeto foi direcionado para uma arquitetura de registro customizado. Nesta abordagem, o smart contract atua como um cartório digital. Os certificados não são tokens, mas sim registros de dados (structs) armazenados permanentemente na blockchain. Este modelo oferece um controle mais granular para a instituição emissora e simplifica a lógica do sistema, focando exclusivamente na emissão, consulta e revogação de certificados de forma segura e centralizada do ponto de vista da autoridade emissora.
+O objetivo deste projeto foi desenvolver um sistema para a emissão e gestão de Certificados de Registro de Inscrição em Disciplina (CRID) que aproveitasse essas características. Este relatório documenta a jornada de design e implementação, culminando em um sistema que funciona como um cartório digital on-chain.
 
-% --- Seção 2: Arquitetura e Tecnologias ---
-\section{Arquitetura e Tecnologias}
-O projeto foi desenvolvido sobre a plataforma Ethereum, utilizando um conjunto de ferramentas padrão da indústria.
+% --- SEÇÃO 2: DESENHO DA ARQUITETURA E JUSTIFICATIVA ---
+\section{Desenho da Arquitetura e Justificativa}
+A decisão mais crítica no design do projeto foi a escolha do modelo de representação dos certificados na blockchain. Duas abordagens principais foram consideradas: o padrão ERC-721 (NFT) e um registro customizado.
 
+\subsection{Análise do Modelo ERC-721 (NFT)}
+O padrão ERC-721 é o padrão de fato para representar ativos digitais únicos.
 \begin{itemize}
-    \item \textbf{Linguagem do Smart Contract:} Solidity (\texttt{\textasciicircum0.8.20}), a linguagem predominante para a Ethereum Virtual Machine (EVM).
-    \item \textbf{Ambiente de Desenvolvimento:} Hardhat, um ambiente flexível para compilação, deploy, testes e depuração de smart contracts.
-    \item \textbf{Bibliotecas de Contratos:} OpenZeppelin Contracts, especificamente a implementação de \texttt{Ownable.sol} para garantir que apenas a instituição (proprietária do contrato) possa executar funções administrativas.
-    \item \textbf{Testes:} A suíte de testes foi construída com Ethers.js e Chai, integrados ao ambiente Hardhat.
+    \item \textbf{Vantagens:} Confere propriedade direta e soberana ao usuário (aluno), que pode manter o token em sua carteira. Garante interoperabilidade com um vasto ecossistema de marketplaces e DApps.
+    \item \textbf{Desvantagens para o Caso de Uso:} A principal característica de um NFT é sua transferibilidade. Permitir que um certificado acadêmico seja livremente vendido ou transferido em um mercado secundário é conceitualmente problemático e indesejável. Além disso, a gestão de metadados (que contêm as informações do certificado) geralmente ocorre off-chain (via API ou IPFS), adicionando uma camada de complexidade e um potencial ponto de falha.
+\end{itemize}
+Concluiu-se que, embora poderoso, o modelo NFT não se alinhava perfeitamente com a natureza de um registro acadêmico oficial, que deve ser um registro autoritativo e não um ativo especulativo.
+
+\subsection{O Modelo de Registro Customizado (On-Chain Registry)}
+A abordagem escolhida foi a de um registro customizado, onde o smart contract atua como a única fonte da verdade.
+\begin{itemize}
+    \item \textbf{Vantagens:} Oferece controle total à instituição emissora sobre o ciclo de vida do certificado. Os dados são armazenados diretamente on-chain, garantindo máxima perenidade e eliminando dependências externas para os dados essenciais. O modelo é mais simples, mais barato em termos de gás (para interações básicas) e evita a complexidade e as implicações da transferibilidade.
+    \item \textbf{Desvantagens:} Menor interoperabilidade com o ecossistema NFT. O armazenamento de dados on-chain tem um custo de gás inicial mais elevado, embora justificado pela criticidade dos dados.
+\end{itemize}
+Esta arquitetura foi selecionada por ser mais segura e conceitualmente alinhada com a função de um cartório digital, onde a integridade e a autoridade do registro são primordiais.
+
+\subsection{Pilha Tecnológica}
+\begin{itemize}
+    \item \textbf{Solidity (\texttt{\textasciicircum0.8.20}):} Linguagem de programação para o smart contract.
+    \item \textbf{Hardhat:} Ambiente de desenvolvimento para compilação, testes e deploy.
+    \item \textbf{OpenZeppelin Contracts:} Utilizado para a implementação segura do padrão de controle de acesso \texttt{Ownable.sol}.
+    \item \textbf{Ethers.js \& Chai:} Frameworks para a escrita de testes automatizados robustos.
 \end{itemize}
 
-% --- Seção 3: Detalhes da Implementação ---
-\section{Detalhes da Implementação}
-O coração do sistema é o contrato \texttt{Crid.sol}, que gerencia o ciclo de vida dos certificados.
+% --- SEÇÃO 3: IMPLEMENTAÇÃO DO SMART CONTRACT ---
+\section{Implementação do Smart Contract}
+O contrato \texttt{CridRegistry.sol} é o núcleo do sistema.
 
-\subsection{Estrutura de Dados}
-A principal estrutura de dados é o \texttt{struct Certificado}, que armazena todas as informações relevantes de forma on-chain.
+\subsection{Estruturas de Dados Centrais}
+A base do registro é a combinação de um \texttt{struct} para definir o certificado e um \texttt{mapping} para armazená-lo.
 
-\begin{verbatim}
+\begin{lstlisting}[caption={Estrutura de Dados do Certificado}, label=lst:struct]
 struct Certificado {
     uint256 id;
     address studentAddress;
     string courseName;
     string professorName;
     uint256 issueDate;
-    bool isValid; // Para controle de revogação
+    bool isValid;
 }
-\end{verbatim}
 
-Um mapeamento (\texttt{mapping(uint256 => Certificado)}) associa um ID numérico único a cada certificado, e um contador (\texttt{\_nextCertificateId}) garante a unicidade dos IDs.
+mapping(uint256 => Certificado) private _certificates;
+uint256 private _nextCertificateId;
+\end{lstlisting}
 
-\subsection{Funcionalidades Principais}
+\subsection{Controle de Acesso}
+O contrato herda de \texttt{Ownable.sol}, o que fornece o modificador \texttt{onlyOwner}. Isso restringe funções críticas, como a emissão e revogação, exclusivamente ao endereço que fez o deploy do contrato (a instituição).
 
+\subsection{Funções Principais}
 \subsubsection{Emissão de Certificados}
-A função \texttt{issueCertificate} permite que apenas o proprietário do contrato crie novos registros. Ela recebe os dados do aluno e do curso, cria uma nova instância do \texttt{struct Certificado}, armazena-a no mapeamento e emite um evento \texttt{CertificateIssued}.
-
-\begin{verbatim}
+A função \texttt{issueCertificate} é a porta de entrada para novos registros. Ela é responsável por criar uma nova entrada no cartório digital.
+\begin{lstlisting}[caption={Função de Emissão}]
 function issueCertificate(
     address _studentAddress,
     string memory _courseName,
     string memory _professorName
-) public onlyOwner { ... }
-\end{verbatim}
+) public onlyOwner {
+    uint256 id = _nextCertificateId;
+    
+    _certificates[id] = Certificado({
+        id: id,
+        studentAddress: _studentAddress,
+        courseName: _courseName,
+        professorName: _professorName,
+        issueDate: block.timestamp,
+        isValid: true
+    });
+
+    _nextCertificateId++;
+    emit CertificateIssued(id, _studentAddress, _courseName);
+}
+\end{lstlisting}
+O uso de \texttt{block.timestamp} garante um carimbo de tempo seguro e imutável para a data de emissão.
 
 \subsubsection{Revogação de Certificados}
-A função \texttt{revokeCertificate} permite que o proprietário invalide um certificado existente, alterando o campo \texttt{isValid} para \texttt{false}. Isso mantém o registro histórico do certificado, mas sinaliza publicamente que ele não é mais válido. Um evento \texttt{CertificateRevoked} é emitido.
-
-\begin{verbatim}
+A revogação é implementada como um "soft delete". Em vez de apagar o registro, o que seria contra os princípios de imutabilidade, o estado do certificado é alterado.
+\begin{lstlisting}[caption={Função de Revogação}]
 function revokeCertificate(uint256 _certificateId) 
     public 
     onlyOwner 
-{ ... }
-\end{verbatim}
+{
+    Certificado storage cert = _certificates[_certificateId];
+    require(cert.issueDate != 0, "Certificado nao encontrado");
+    
+    cert.isValid = false;
+    emit CertificateRevoked(_certificateId);
+}
+\end{lstlisting}
+Isso preserva o histórico completo, permitindo auditorias futuras sobre quais certificados foram emitidos e posteriormente invalidados.
 
-\subsubsection{Consulta de Certificados}
-Qualquer pessoa pode verificar a autenticidade e os detalhes de um certificado através da função pública \texttt{getCertificate}, que recebe um ID e retorna a estrutura de dados completa do certificado correspondente.
+\subsubsection{Consulta Pública}
+A função \texttt{getCertificate} serve como o endpoint público para verificação, permitindo que qualquer pessoa ou sistema consulte os dados de um certificado a partir de seu ID.
 
-% --- Seção 4: Testes e Validação ---
-\section{Testes e Validação}
-Uma suíte de testes abrangente foi desenvolvida para validar a lógica do contrato. Os principais cenários testados foram:
+\subsection{Eventos}
+Os eventos \texttt{CertificateIssued} e \texttt{CertificateRevoked} são emitidos para facilitar a indexação de dados por serviços off-chain e para a construção de interfaces de usuário reativas.
+
+% --- SEÇÃO 4: VERIFICAÇÃO E TESTES ---
+\section{Verificação e Testes}
+A validação do contrato foi realizada através de uma suíte de testes unitários abrangente utilizando o ambiente Hardhat. A metodologia focou em cobrir todos os caminhos lógicos do código.
+
+\subsubsection{Cenários de Teste}
 \begin{itemize}
-    \item \textbf{Deploy:} Verificação do proprietário correto do contrato após a implantação.
-    \item \textbf{Emissão:} Garantia de que apenas o proprietário pode emitir certificados e que os dados são armazenados corretamente.
-    \item \textbf{Revogação:} Validação de que apenas o proprietário pode revogar um certificado e que o status \texttt{isValid} é atualizado.
-    \item \textbf{Controle de Acesso:} Confirmação de que tentativas de chamar funções administrativas por contas não autorizadas são revertidas.
-    \item \textbf{Casos de Borda:} Teste de revogação de certificados inexistentes para garantir que o contrato lida com o erro adequadamente.
+    \item \textbf{Estado Inicial:} Verificação se o proprietário do contrato é definido corretamente no deploy.
+    \item \textbf{Lógica de Emissão:} Testes para garantir que apenas o proprietário pode emitir, que os dados são gravados corretamente e que os IDs são incrementados de forma sequencial.
+    \item \textbf{Lógica de Revogação:} Testes para garantir que apenas o proprietário pode revogar, que o status \texttt{isValid} é alterado e que o evento correto é emitido.
+    \item \textbf{Controle de Acesso:} Tentativas de chamada de funções restritas por contas não autorizadas, esperando a reversão da transação com o erro \texttt{OwnableUnauthorizedAccount}.
+    \item \textbf{Casos de Borda:} Tentativa de revogar um certificado com um ID inexistente, validando que a transação é revertida com a mensagem de erro esperada.
 \end{itemize}
-Todos os testes foram executados com sucesso, confirmando a robustez e a segurança da implementação.
 
-% --- Seção 5: Conclusão e Trabalhos Futuros ---
+\subsubsection{Resultados}
+Todos os 7 casos de teste passaram com sucesso, indicando que o smart contract se comporta conforme o esperado em todos os cenários previstos, demonstrando sua robustez e segurança.
+
+% --- SEÇÃO 5: CONCLUSÃO ---
 \section{Conclusão}
-Este projeto implementou com sucesso um sistema de registro de certificados acadêmicos na blockchain, funcionando como um cartório digital. A escolha de um modelo de registro customizado em vez de NFTs provou ser mais adequada para o caso de uso, oferecendo à instituição emissora o controle necessário sobre o ciclo de vida dos certificados e evitando as complexidades de um mercado secundário. O resultado é um sistema seguro, transparente e imutável para a verificação de credenciais acadêmicas.
+O projeto CRID-Registry demonstrou com sucesso a viabilidade e a adequação de um modelo de registro on-chain para a gestão de certificados acadêmicos. Ao rejeitar o modelo de NFT em favor de um cartório digital customizado, o sistema prioriza a integridade, o controle autoritativo e a perenidade dos registros, alinhando-se melhor aos requisitos de uma credencial acadêmica formal. A implementação resultante é segura, eficiente e serve como uma base sólida para a construção de um ecossistema de verificação de credenciais descentralizado e confiável.
 
-\subsection{Trabalhos Futuros}
+% --- SEÇÃO 6: TRABALHOS FUTUROS ---
+\section{Trabalhos Futuros}
 \begin{itemize}
-    \item \textbf{Desenvolvimento de uma DApp (Frontend):} Criar uma interface web para que a instituição possa emitir e gerenciar os certificados de forma amigável e para que terceiros (como empregadores) possam facilmente consultar e verificar a validade de um certificado.
-    \item \textbf{Otimização de Custos de Gás:} Para emissão em lote, implementar uma função que permita criar múltiplos certificados em uma única transação, economizando custos de gás.
-    \item \textbf{Implantação em Redes de Baixo Custo:} Para viabilizar o uso em larga escala, o contrato pode ser implantado em redes de camada 2 (Layer 2), como Polygon ou Arbitrum.
+    \item \textbf{Interface de Usuário (DApp):} Desenvolver uma aplicação web com duas interfaces: uma administrativa para a instituição emitir e gerenciar certificados, e uma pública para que alunos e terceiros (empregadores, outras instituições) possam verificar a validade de um certificado através de seu ID.
+    \item \textbf{Emissão em Lote:} Implementar uma função \texttt{issueMultipleCertificates} que aceite um array de dados de certificados para permitir a emissão de centenas de certificados em uma única transação, otimizando significativamente os custos de gás.
+    \item \textbf{Exploração de Privacidade:} Para casos de uso que exijam privacidade dos dados do aluno, pesquisar a integração com tecnologias de conhecimento-zero (Zero-Knowledge Proofs), como zk-SNARKs, para permitir a verificação da validade de um certificado sem revelar publicamente os dados contidos nele.
+    \item \textbf{Implantação em Layer 2:} Para reduzir os custos de transação e aumentar a escalabilidade, realizar o deploy do contrato em uma rede de camada 2 (Layer 2), como Polygon, Arbitrum ou Optimism.
 \end{itemize}
 
-% --- Referências (Opcional) ---
+% --- REFERÊNCIAS ---
 \begin{thebibliography}{1}
     \bibitem{OpenZeppelin}
     OpenZeppelin, ``OpenZeppelin Contracts: Secure Smart Contracts for Ethereum,'' \url{https://openzeppelin.com/contracts/}.
