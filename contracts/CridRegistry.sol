@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * A instituição (owner) pode emitir, revogar e consultar certificados.
  * Os certificados são dados armazenados no contrato, não são tokens transferíveis (NFTs).
  */
-contract Crid is Ownable {
+contract CridRegistry is Ownable {
 
     // Estrutura que define os dados de um certificado
     struct Certificado {

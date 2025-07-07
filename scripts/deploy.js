@@ -1,20 +1,17 @@
 const hre = require("hardhat");
 
 async function main() {
-  // Compila o contrato
-  await hre.run('compile');
-
   // Obtém o contrato que será implantado
-  const Crid = await hre.ethers.getContractFactory("Crid");
+  const CridRegistry = await hre.ethers.getContractFactory("CridRegistry");
 
   // Faz o deploy do contrato
-  const crid = await Crid.deploy();
+  const cridRegistry = await CridRegistry.deploy();
 
   // Aguarda a confirmação do deploy na rede
-  await crid.waitForDeployment();
+  await cridRegistry.waitForDeployment();
 
   // Exibe o endereço do contrato no console
-  console.log(`Contrato Crid (Registro Customizado) implantado em: ${crid.target}`);
+  console.log(`Contrato CridRegistry implantado em: ${cridRegistry.target}`);
 }
 
 // Padrão recomendado para lidar com erros e executar a função main.

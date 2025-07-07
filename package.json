@@ -1,7 +1,7 @@
 {
   "name": "crid-project",
   "version": "1.0.0",
-  "description": "Projeto de Certificado de Registro de Inscrição em Disciplina com Solidity e Hardhat",
+  "description": "Um sistema de registro de certificados on-chain (cartório digital) usando Solidity e Hardhat.",
   "main": "index.js",
   "scripts": {
     "test": "hardhat test"

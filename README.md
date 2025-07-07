@@ -1,59 +1,68 @@
-# Projeto CRID - Certificado de Registro de Inscrição em Disciplina
+# CRID Registry - Cartório de Certificados em Blockchain
 
-Este projeto implementa um sistema de verificação de certificados digitais usando um smart contract na blockchain Ethereum. A principal característica é a verificação on-chain de assinaturas geradas off-chain, o que resulta em uma grande economia de custos de gás, pois os dados dos certificados não são armazenados na blockchain.
+Este projeto implementa um sistema de registro de certificados digitais (CRID - Certificado de Registro de Inscrição em Disciplina) na blockchain, funcionando como um cartório digital. A abordagem utiliza um smart contract customizado para armazenar e gerenciar os certificados de forma on-chain, em vez de usar o padrão NFT (ERC-721).
 
-## Como Funciona
+A instituição de ensino, como proprietária do contrato, tem autoridade exclusiva para emitir e revogar certificados, garantindo um registro de dados autoritativo, imutável e publicamente verificável.
 
-1.  **Geração Off-Chain**: A instituição de ensino (o "owner" do contrato) gera um certificado com os dados do aluno, curso, etc.
-2.  **Assinatura Off-Chain**: A instituição usa sua chave privada para assinar a hash dos dados do certificado.
-3.  **Verificação On-Chain**: Qualquer pessoa pode chamar a função `verificarCertificado` no smart contract, fornecendo os dados do certificado e a assinatura. O contrato reconstrói a hash, recupera o endereço do assinante e verifica se corresponde ao endereço da instituição.
+## Funcionalidades
 
-## Estrutura do Projeto
+*   **Emissão de Certificados:** Apenas o dono do contrato pode registrar novos certificados, associando-os a um endereço de aluno.
+*   **Revogação de Certificados:** O dono do contrato pode invalidar um certificado existente, mantendo o histórico da emissão.
+*   **Consulta Pública:** Qualquer pessoa ou sistema pode verificar os detalhes e a validade de um certificado usando seu ID único.
 
--   `contracts/Crid.sol`: O smart contract principal escrito em Solidity.
--   `test/Crid.test.js`: Testes automatizados para o contrato usando Hardhat, Ethers.js, Mocha e Chai.
--   `scripts/deploy.js`: Script para fazer o deploy do contrato.
--   `.github/workflows/ci.yml`: Workflow de Integração Contínua com GitHub Actions para rodar os testes automaticamente.
--   `hardhat.config.js`: Arquivo de configuração do Hardhat.
--   `package.json`: Dependências e scripts do projeto.
+## Tecnologias Utilizadas
 
-## Começando
+*   **Solidity:** Linguagem para escrever o smart contract.
+*   **Hardhat:** Ambiente de desenvolvimento para compilação, testes e deploy.
+*   **OpenZeppelin:** Biblioteca para contratos seguros, utilizada aqui para o controle de acesso (`Ownable`).
+*   **Ethers.js & Chai:** Para a suíte de testes automatizados.
+
+## Como Começar
 
 ### Pré-requisitos
 
--   [Node.js](https://nodejs.org/) (versão 18 ou superior)
--   [npm](https://www.npmjs.com/)
+*   [Node.js](https://nodejs.org/) (versão 18.x ou superior)
+*   [npm](https://www.npmjs.com/) (geralmente vem com o Node.js)
 
-### Instalação
+### 1. Instalação
 
 Clone o repositório e instale as dependências:
 
 ```bash
-git clone <URL_DO_REPOSITORIO>
+git clone <URL_DO_SEU_REPOSITORIO>
 cd crid-project
 npm install
 ```
 
-### Compilação
+### 2. Compilação
 
 Para compilar os smart contracts, use o comando:
 
 ```bash
 npx hardhat compile
 ```
+Isso irá gerar os artefatos da compilação (ABI e bytecode) no diretório `artifacts/`.
 
-### Testes
+### 3. Testes
 
-Para rodar os testes automatizados, execute:
+Para rodar a suíte de testes automatizados e garantir que tudo está funcionando como esperado:
 
 ```bash
 npx hardhat test
 ```
 
-### Deploy
+### 4. Deploy
 
-Para fazer o deploy do contrato em uma rede (configurada no `hardhat.config.js`), use o script:
+Para fazer o deploy do contrato em uma rede local do Hardhat:
 
-```bash
-npx hardhat run scripts/deploy.js --network <NOME_DA_REDE>
-```
+1.  Inicie um nó local em um terminal:
+    ```bash
+    npx hardhat node
+    ```
+
+2.  Em outro terminal, execute o script de deploy:
+    ```bash
+    npx hardhat run scripts/deploy.js --network localhost
+    ```
+
+O endereço do contrato implantado será exibido no console.
