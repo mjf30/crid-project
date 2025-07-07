@@ -8,13 +8,15 @@
 \usepackage{url}
 \usepackage{hyperref}
 \usepackage{listings} % Para blocos de código formatados
+\usepackage[T1]{fontenc} % Para melhor hifenização e suporte a fontes
 
 % --- CONFIGURAÇÕES DE ESTILO ---
 \hypersetup{
     colorlinks=true,
-    linkcolor=blue,
-    filecolor=magenta,      
-    urlcolor=cyan,
+    linkcolor=black,
+    citecolor=black,
+    filecolor=black,      
+    urlcolor=blue,
 }
 \lstset{
     language=Solidity,
@@ -25,8 +27,13 @@
     breaklines=true,
     frame=single,
     tabsize=2,
-    showstringspaces=false
+    showstringspaces=false,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    framexleftmargin=15pt
 }
+\renewcommand{\figurename}{Figura}
+\renewcommand{\tablename}{Tabela}
 
 % --- INFORMAÇÕES DO DOCUMENTO ---
 \title{CRID-Registry: Arquitetura e Implementação de um Cartório Digital On-Chain para Certificados Acadêmicos}
@@ -46,7 +53,7 @@
 
 % --- RESUMO ---
 \begin{abstract}
-A autenticidade e a perenidade de certificados acadêmicos são pilares para a confiança no sistema educacional. Sistemas tradicionais, no entanto, são vulneráveis a fraudes, perdas e ineficiências operacionais. Este relatório apresenta uma análise aprofundada do desenvolvimento do CRID-Registry, um sistema de registro de certificados on-chain construído na blockchain Ethereum. O documento detalha a arquitetura de registro customizado, argumentando que o controle autoritativo e a natureza não transferível dos registros são ideais para credenciais acadêmicas. A implementação do smart contract \texttt{CridRegistry.sol} é dissecada, incluindo suas estruturas de dados, funções de controle de acesso, emissão, revogação e consulta. Finalmente, a metodologia de testes e os resultados são apresentados, validando a robustez do sistema.
+A autenticidade e a perenidade de certificados acadêmicos são pilares para a confiança no sistema educacional. Sistemas tradicionais, no entanto, são vulneráveis a fraudes, perdas e ineficiências operacionais. Este relatório apresenta uma análise aprofundada do desenvolvimento do CRID-Registry, um sistema de registro de certificados on-chain construído na blockchain Ethereum. O documento detalha a arquitetura de registro customizado, argumentando que o controle autoritativo e a natureza não transferível dos registros são ideais para credenciais acadêmicas. A implementação do smart contract \texttt{CridRegistry.sol} é dissecada, incluindo suas estruturas de dados, funções de controle de acesso, emissão, revogação e consulta. Finalmente, a metodologia de testes e os resultados são apresentados, validando a robustez do sistema e delineando caminhos para trabalhos futuros.
 \end{abstract}
 
 % --- PALAVRAS-CHAVE ---
@@ -62,20 +69,26 @@ A verificação de credenciais acadêmicas é um processo historicamente analóg
 
 A tecnologia blockchain, com sua natureza de registro distribuído, imutável e transparente, oferece um paradigma fundamentalmente superior para este caso de uso. Ao registrar um certificado na blockchain, cria-se uma prova de existência e autenticidade que é resistente à censura, independente de qualquer instituição central e perpetuamente acessível.
 
-O objetivo deste projeto foi desenvolver um sistema para a emissão e gestão de Certificados de Registro de Inscrição em Disciplina (CRID) que aproveitasse essas características, resultando em um sistema que funciona como um cartório digital on-chain.
+O objetivo deste projeto foi desenvolver um sistema para a emissão e gestão de Certificados de Registro de Inscrição em Disciplina (CRID) que aproveitasse essas características, resultando em um sistema que funciona como um cartório digital on-chain. Este documento apresenta a arquitetura, implementação e validação do CRID-Registry, uma solução robusta para a gestão de credenciais acadêmicas na era digital.
 
 % --- SEÇÃO 2: ARQUITETURA DO SISTEMA ---
 \section{Arquitetura do Sistema}
 A arquitetura do CRID-Registry foi projetada para funcionar como um cartório digital, onde o smart contract é a única fonte da verdade para a validade dos certificados. Este modelo foi escolhido por oferecer controle total à instituição emissora, garantir a perenidade dos dados e alinhar-se com a natureza de um registro oficial.
 
-A abordagem de registro customizado armazena todos os dados essenciais do certificado diretamente na blockchain. Isso garante máxima disponibilidade e imutabilidade, eliminando dependências de sistemas de armazenamento externos. O modelo é inerentemente mais simples e seguro para este caso de uso, pois evita a complexidade e as implicações de transferibilidade de outros padrões de token.
+\subsection{Princípios de Design}
+A solução foi guiada pelos seguintes princípios:
+\begin{itemize}
+    \item \textbf{Autoridade Centralizada, Verificação Descentralizada:} A emissão e a revogação são controladas por uma única autoridade (a instituição), mas a verificação pode ser feita por qualquer pessoa, em qualquer lugar, sem permissão.
+    \item \textbf{Imutabilidade do Registro Histórico:} Uma vez emitido, um certificado nunca é apagado. Sua validade pode ser alterada, mas o registro de sua existência é perpétuo.
+    \item \textbf{Perenidade dos Dados On-Chain:} Todos os dados essenciais do certificado são armazenados diretamente na blockchain para garantir máxima disponibilidade e resistência à censura, eliminando dependências de sistemas de armazenamento externos.
+\end{itemize}
 
 \subsection{Pilha Tecnológica}
 \begin{itemize}
-    \item \textbf{Solidity (\texttt{\textasciicircum0.8.20}):} Linguagem de programação para o smart contract.
-    \item \textbf{Hardhat:} Ambiente de desenvolvimento para compilação, testes e deploy.
-    \item \textbf{OpenZeppelin Contracts:} Utilizado para a implementação segura do padrão de controle de acesso \texttt{Ownable.sol}.
-    \item \textbf{Ethers.js \& Chai:} Frameworks para a escrita de testes automatizados robustos.
+    \item \textbf{Solidity (\texttt{\textasciicircum0.8.20}):} Linguagem de programação para o smart contract, escolhida por ser a linguagem nativa da Ethereum Virtual Machine (EVM).
+    \item \textbf{Hardhat:} Ambiente de desenvolvimento para compilação, testes e deploy, selecionado por sua flexibilidade e ecossistema de plugins.
+    \item \textbf{OpenZeppelin Contracts:} Utilizado para a implementação segura do padrão de controle de acesso \texttt{Ownable.sol}, um padrão de-facto na indústria.
+    \item \textbf{Ethers.js \& Chai:} Frameworks para a escrita de testes automatizados que simulam interações reais com o contrato.
 \end{itemize}
 
 % --- SEÇÃO 3: IMPLEMENTAÇÃO DO SMART CONTRACT ---
@@ -98,63 +111,114 @@ struct Certificado {
 mapping(uint256 => Certificado) private _certificates;
 uint256 private _nextCertificateId;
 \end{lstlisting}
+O \texttt{struct} \texttt{Certificado} agrupa todos os dados relevantes. O \texttt{mapping} \texttt{\_certificates} funciona como um banco de dados chave-valor on-chain, associando um ID a cada certificado. A variável \texttt{\_nextCertificateId} atua como um contador auto-incremental para garantir a unicidade de cada ID.
 
 \subsection{Controle de Acesso}
-O contrato herda de \texttt{Ownable.sol}, o que fornece o modificador \texttt{onlyOwner}. Isso restringe funções críticas, como a emissão e revogação, exclusivamente ao endereço que fez o deploy do contrato (a instituição).
+O contrato herda de \texttt{Ownable.sol}, que implementa um sistema de propriedade simples e seguro.
+\begin{itemize}
+    \item \textbf{constructor():} Define o \texttt{msg.sender} (o endereço que faz o deploy) como o proprietário inicial.
+    \item \textbf{modifier onlyOwner:} Um guarda que pode ser aplicado a funções para garantir que apenas o proprietário possa executá-las.
+    \item \textbf{function owner():} Uma função pública que retorna o endereço do proprietário atual.
+\end{itemize}
+Este padrão é fundamental para garantir que apenas a instituição de ensino possa emitir ou revogar certificados.
 
-\subsection{Funções Principais}
-\subsubsection{Emissão de Certificados}
-A função \texttt{issueCertificate} é a porta de entrada para novos registros.
-\begin{lstlisting}[caption={Função de Emissão}]
+\subsection{Ciclo de Vida do Certificado}
+\subsubsection{Emissão}
+A função \texttt{issueCertificate} cria um novo registro.
+\begin{lstlisting}[caption={Função de Emissão de Certificado}]
 function issueCertificate(
     address _studentAddress,
     string memory _courseName,
     string memory _professorName
-) public onlyOwner { ... }
-\end{lstlisting}
+) public onlyOwner {
+    uint256 id = _nextCertificateId;
+    
+    _certificates[id] = Certificado({
+        id: id,
+        studentAddress: _studentAddress,
+        courseName: _courseName,
+        professorName: _professorName,
+        issueDate: block.timestamp,
+        isValid: true
+    });
 
-\subsubsection{Revogação de Certificados}
-A revogação é implementada como um "soft delete", alterando o estado do certificado sem apagar o registro histórico.
-\begin{lstlisting}[caption={Função de Revogação}]
+    _nextCertificateId++;
+    emit CertificateIssued(id, _studentAddress, _courseName);
+}
+\end{lstlisting}
+O uso de \texttt{block.timestamp} fornece um carimbo de tempo seguro, e a emissão do evento \texttt{CertificateIssued} é crucial para que aplicações off-chain possam "escutar" por novas emissões sem precisar consultar o estado do contrato constantemente.
+
+\subsubsection{Revogação}
+A revogação é um "soft delete", preservando o registro histórico.
+\begin{lstlisting}[caption={Função de Revogação de Certificado}]
 function revokeCertificate(uint256 _certificateId) 
     public 
     onlyOwner 
-{ ... }
+{
+    Certificado storage cert = _certificates[_certificateId];
+    require(cert.issueDate != 0, "Certificado nao encontrado");
+    
+    cert.isValid = false;
+    emit CertificateRevoked(_certificateId);
+}
 \end{lstlisting}
+A utilização da palavra-chave \texttt{storage} para a variável \texttt{cert} é uma otimização de gás, pois manipula diretamente o estado do contrato em vez de criar uma cópia em memória. O \texttt{require} previne a tentativa de revogar um certificado inexistente.
 
-\subsubsection{Consulta Pública}
-A função \texttt{getCertificate} serve como o endpoint público para verificação.
-
-\subsection{Eventos}
-Os eventos \texttt{CertificateIssued} e \texttt{CertificateRevoked} são emitidos para facilitar a indexação de dados por serviços off-chain.
+\subsubsection{Consulta}
+A função \texttt{getCertificate} é a interface pública para verificação.
+\begin{lstlisting}[caption={Função de Consulta de Certificado}]
+function getCertificate(uint256 _certificateId) 
+    public 
+    view 
+    returns (Certificado memory) 
+{
+    return _certificates[_certificateId];
+}
+\end{lstlisting}
+Sendo uma função \texttt{view}, sua execução não consome gás quando chamada externamente por um nó, tornando a verificação gratuita e eficiente.
 
 % --- SEÇÃO 4: VERIFICAÇÃO E TESTES ---
 \section{Verificação e Testes}
-A validação do contrato foi realizada através de uma suíte de testes unitários abrangente.
+A validação do contrato foi realizada através de uma suíte de testes unitários abrangente utilizando o ambiente Hardhat Network, que simula uma blockchain Ethereum local.
 
-\subsubsection{Cenários de Teste}
-\begin{itemize}
-    \item \textbf{Estado Inicial:} Verificação do proprietário do contrato.
-    \item \textbf{Lógica de Emissão:} Garantia de que apenas o proprietário pode emitir e que os dados são gravados corretamente.
-    \item \textbf{Lógica de Revogação:} Validação de que apenas o proprietário pode revogar e que o status é atualizado.
-    \item \textbf{Controle de Acesso:} Testes de reversão para chamadas não autorizadas.
-    \item \textbf{Casos de Borda:} Tentativa de revogar certificados inexistentes.
-\end{itemize}
+\begin{table}[h!]
+\centering
+\caption{Resumo dos Cenários de Teste}
+\label{tab:test-scenarios}
+\begin{tabular}{|p{2.5cm}|p{2.5cm}|p{2.5cm}|}
+\hline
+\textbf{Funcionalidade} & \textbf{Ação de Teste} & \textbf{Validação Esperada} \\
+\hline
+\textbf{Deploy} & Implantar o contrato & O \texttt{owner} é igual ao endereço do implantador. \\
+\hline
+\textbf{Emissão (Sucesso)} & Owner chama \texttt{issueCertificate} & Evento \texttt{CertificateIssued} é emitido com os dados corretos. Dados no contrato são verificados. \\
+\hline
+\textbf{Emissão (Falha)} & Conta não-owner chama \texttt{issueCertificate} & Transação é revertida com erro \texttt{OwnableUnauthorizedAccount}. \\
+\hline
+\textbf{Revogação (Sucesso)} & Owner chama \texttt{revokeCertificate} em um ID válido & O campo \texttt{isValid} do certificado se torna \texttt{false}. Evento \texttt{CertificateRevoked} é emitido. \\
+\hline
+\textbf{Revogação (Falha)} & Conta não-owner chama \texttt{revokeCertificate} & Transação é revertida com erro \texttt{OwnableUnauthorizedAccount}. \\
+\hline
+\textbf{Borda (ID Inválido)} & Owner chama \texttt{revokeCertificate} em um ID inexistente & Transação é revertida com a mensagem "Certificado nao encontrado". \\
+\hline
+\textbf{Sequenciamento} & Múltiplas emissões & Os IDs dos certificados são incrementados corretamente (0, 1, 2...). \\
+\hline
+\end{tabular}
+\end{table}
 
-\subsubsection{Resultados}
-Todos os casos de teste passaram com sucesso, indicando que o smart contract se comporta conforme o esperado.
+Todos os 7 cenários de teste descritos na Tabela \ref{tab:test-scenarios} passaram com sucesso, indicando que o smart contract se comporta conforme o esperado em todos os caminhos lógicos previstos, demonstrando sua robustez e segurança.
 
 % --- SEÇÃO 5: CONCLUSÃO ---
 \section{Conclusão}
-O projeto CRID-Registry implementou com sucesso um sistema de registro on-chain para certificados acadêmicos. A arquitetura de cartório digital provou ser uma solução robusta e adequada, priorizando a integridade e o controle autoritativo dos registros. A implementação resultante é segura, eficiente e serve como uma base sólida para um ecossistema de verificação de credenciais descentralizado e confiável.
+O projeto CRID-Registry implementou com sucesso um sistema de registro on-chain para certificados acadêmicos. A arquitetura de cartório digital provou ser uma solução robusta e adequada, priorizando a integridade e o controle autoritativo dos registros. A implementação resultante é segura, eficiente e serve como uma base sólida para a construção de um ecossistema de verificação de credenciais descentralizado e confiável.
 
 % --- SEÇÃO 6: TRABALHOS FUTUROS ---
 \section{Trabalhos Futuros}
 \begin{itemize}
-    \item \textbf{Interface de Usuário (DApp):} Desenvolver uma aplicação web para emissão e consulta.
-    \item \textbf{Emissão em Lote:} Implementar uma função para criar múltiplos certificados em uma única transação.
-    \item \textbf{Exploração de Privacidade:} Pesquisar a integração com tecnologias de conhecimento-zero (Zero-Knowledge Proofs).
-    \item \textbf{Implantação em Layer 2:} Realizar o deploy do contrato em uma rede de camada 2 para reduzir custos.
+    \item \textbf{Interface de Usuário (DApp):} Desenvolver uma aplicação web com duas interfaces: uma administrativa para a instituição emitir e gerenciar certificados, e uma pública para que alunos e terceiros (empregadores, outras instituições) possam verificar a validade de um certificado através de seu ID.
+    \item \textbf{Emissão em Lote:} Implementar uma função \texttt{issueMultipleCertificates} que aceite um array de dados de certificados para permitir a emissão de centenas de certificados em uma única transação, otimizando significativamente os custos de gás.
+    \item \textbf{Exploração de Privacidade:} Para casos de uso que exijam privacidade dos dados do aluno, pesquisar a integração com tecnologias de conhecimento-zero (Zero-Knowledge Proofs), como zk-SNARKs, para permitir a verificação da validade de um certificado sem revelar publicamente os dados contidos nele.
+    \item \textbf{Implantação em Layer 2:} Para reduzir os custos de transação e aumentar a escalabilidade, realizar o deploy do contrato em uma rede de camada 2 (Layer 2), como Polygon, Arbitrum ou Optimism.
 \end{itemize}
 
 % --- REFERÊNCIAS ---
