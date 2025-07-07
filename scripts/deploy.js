@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 
 async function main() {
-  // Compila o contrato (boa prática, embora o Hardhat faça isso automaticamente)
+  // Compila o contrato
   await hre.run('compile');
 
   // Obtém o contrato que será implantado
@@ -14,7 +14,7 @@ async function main() {
   await crid.waitForDeployment();
 
   // Exibe o endereço do contrato no console
-  console.log(`Contrato Crid (NFT ERC-721) implantado em: ${crid.target}`);
+  console.log(`Contrato Crid (Registro Customizado) implantado em: ${crid.target}`);
 }
 
 // Padrão recomendado para lidar com erros e executar a função main.

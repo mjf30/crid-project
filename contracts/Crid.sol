@@ -1,62 +1,96 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
- * @title Crid
- * @dev Implementa um Certificado de Registro de Inscrição em Disciplina (CRID)
- * como um token não fungível (NFT) no padrão ERC-721.
- * Cada certificado é um NFT único, de propriedade do aluno, emitido pela
- * instituição (owner do contrato).
+ * @title CridRegistry
+ * @dev Contrato que funciona como um cartório ou registro centralizado para
+ * Certificados de Registro de Inscrição em Disciplina (CRID).
+ * A instituição (owner) pode emitir, revogar e consultar certificados.
+ * Os certificados são dados armazenados no contrato, não são tokens transferíveis (NFTs).
  */
-contract Crid is ERC721, Ownable {
-    // Contador para gerar IDs de token únicos e sequenciais.
-    // Começa em 0 e é incrementado antes de cada mint.
-    uint256 private _tokenIdCounter;
+contract Crid is Ownable {
 
-    // A URL base para os metadados dos tokens. Ex: "https://api.sua-faculdade.com/crid/"
-    // A URI final de um token será: baseURI + tokenId.
-    string private _baseURIextended;
-
-    /**
-     * @dev Configura o nome do token ("Crid"), o símbolo ("CRID") e o dono do contrato.
-     */
-    constructor() ERC721("Crid", "CRID") Ownable(msg.sender) {}
-
-    /**
-     * @dev Retorna a URI base para construir as URIs de metadados dos tokens.
-     */
-    function _baseURI() internal view override returns (string memory) {
-        return _baseURIextended;
+    // Estrutura que define os dados de um certificado
+    struct Certificado {
+        uint256 id;
+        address studentAddress; // Endereço do aluno que recebeu o certificado
+        string courseName;
+        string professorName;
+        uint256 issueDate;
+        bool isValid; // Permite que o certificado seja revogado
     }
 
-    /**
-     * @dev Permite que o owner do contrato defina a URI base dos metadados.
-     * A URI deve terminar com uma barra "/".
-     * @param baseURI A nova URI base.
-     */
-    function setBaseURI(string memory baseURI) public onlyOwner {
-        _baseURIextended = baseURI;
-    }
+    // Mapeamento do ID do certificado para o struct do certificado
+    mapping(uint256 => Certificado) private _certificates;
+    
+    // Contador para gerar o próximo ID de certificado
+    uint256 private _nextCertificateId;
+
+    // Evento emitido quando um novo certificado é criado
+    event CertificateIssued(
+        uint256 indexed certificateId,
+        address indexed studentAddress,
+        string courseName
+    );
+
+    // Evento emitido quando um certificado é revogado
+    event CertificateRevoked(uint256 indexed certificateId);
+
+    constructor() Ownable(msg.sender) {}
 
     /**
-     * @dev Emite um novo certificado (NFT) para um endereço de aluno.
+     * @dev Emite um novo certificado para um aluno.
      * Apenas o owner do contrato (a instituição) pode chamar esta função.
-     * @param to O endereço do aluno que receberá o NFT.
-     * @return O ID do novo token criado.
+     * @param _studentAddress O endereço do aluno.
+     * @param _courseName O nome do curso ou disciplina.
+     * @param _professorName O nome do professor.
      */
-    function safeMint(address to) public onlyOwner returns (uint256) {
-        // O ID do token é o valor atual do contador.
-        uint256 tokenId = _tokenIdCounter;
+    function issueCertificate(
+        address _studentAddress,
+        string memory _courseName,
+        string memory _professorName
+    ) public onlyOwner {
+        uint256 id = _nextCertificateId;
         
-        // Incrementa o contador para o próximo mint.
-        _tokenIdCounter++;
-        
-        // Cria (minta) o novo token e o atribui ao endereço do aluno.
-        _safeMint(to, tokenId);
+        _certificates[id] = Certificado({
+            id: id,
+            studentAddress: _studentAddress,
+            courseName: _courseName,
+            professorName: _professorName,
+            issueDate: block.timestamp,
+            isValid: true
+        });
 
-        return tokenId;
+        _nextCertificateId++;
+
+        emit CertificateIssued(id, _studentAddress, _courseName);
+    }
+
+    /**
+     * @dev Revoga um certificado, tornando-o inválido.
+     * Apenas o owner pode chamar esta função.
+     * @param _certificateId O ID do certificado a ser revogado.
+     */
+    function revokeCertificate(uint256 _certificateId) public onlyOwner {
+        Certificado storage cert = _certificates[_certificateId];
+        // Garante que o certificado existe antes de tentar revogá-lo
+        require(cert.issueDate != 0, "Certificado nao encontrado");
+        
+        cert.isValid = false;
+        emit CertificateRevoked(_certificateId);
+    }
+
+    /**
+     * @dev Retorna os detalhes de um certificado específico.
+     * Função pública para que qualquer pessoa possa verificar um certificado.
+     * @param _certificateId O ID do certificado.
+     * @return O struct completo do certificado.
+     */
+    function getCertificate(
+        uint256 _certificateId
+    ) public view returns (Certificado memory) {
+        return _certificates[_certificateId];
     }
 }
