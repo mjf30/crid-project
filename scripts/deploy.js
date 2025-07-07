@@ -1,18 +1,23 @@
-// scripts/deploy.js
 const hre = require("hardhat");
 
 async function main() {
-  const [deployer] = await hre.ethers.getSigners();
+  // Compila o contrato (boa prática, embora o Hardhat faça isso automaticamente)
+  await hre.run('compile');
 
-  console.log("Deploying contracts with the account:", deployer.address);
+  // Obtém o contrato que será implantado
+  const Crid = await hre.ethers.getContractFactory("Crid");
 
-  const crid = await hre.ethers.deployContract("Crid");
+  // Faz o deploy do contrato
+  const crid = await Crid.deploy();
 
+  // Aguarda a confirmação do deploy na rede
   await crid.waitForDeployment();
 
-  console.log(`Crid contract deployed to: ${crid.target}`);
+  // Exibe o endereço do contrato no console
+  console.log(`Contrato Crid (NFT ERC-721) implantado em: ${crid.target}`);
 }
 
+// Padrão recomendado para lidar com erros e executar a função main.
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
