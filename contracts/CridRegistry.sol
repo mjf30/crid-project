@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * @dev Contrato que funciona como um cartório ou registro centralizado para
  * Certificados de Registro de Inscrição em Disciplina (CRID).
  * A instituição (owner) pode emitir, revogar e consultar certificados.
- * Os certificados são dados armazenados no contrato, não são tokens transferíveis (NFTs).
+ * Os certificados são armazenados como registros de dados seguros e imutáveis diretamente no contrato.
  */
 contract CridRegistry is Ownable {
 

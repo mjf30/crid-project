@@ -1,6 +1,6 @@
 # CRID Registry - Cartório de Certificados em Blockchain
 
-Este projeto implementa um sistema de registro de certificados digitais (CRID - Certificado de Registro de Inscrição em Disciplina) na blockchain, funcionando como um cartório digital. A abordagem utiliza um smart contract customizado para armazenar e gerenciar os certificados de forma on-chain, em vez de usar o padrão NFT (ERC-721).
+Este projeto implementa um sistema de registro de certificados digitais (CRID - Certificado de Registro de Inscrição em Disciplina) na blockchain, funcionando como um cartório digital. A abordagem utiliza um smart contract para armazenar e gerenciar os certificados como registros de dados on-chain.
 
 A instituição de ensino, como proprietária do contrato, tem autoridade exclusiva para emitir e revogar certificados, garantindo um registro de dados autoritativo, imutável e publicamente verificável.
 
